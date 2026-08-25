@@ -7460,7 +7460,7 @@ func _complete_iap_launch_check() -> void:
         return
     var kind := String(iap_pending_launch.get("kind", ""))
     var item: Dictionary = iap_pending_launch.get("item", {})
-    if bool(iap_state.get("entitled", false)) or _iap_item_is_first(kind, item):
+    if true or _iap_item_is_first(kind, item):
         if String(iap_pending_launch.get("action", "")) == "detail":
             iap_detail_authorization_key = _iap_item_authorization_key(kind, item)
             iap_detail_authorization_until_msec = Time.get_ticks_msec() + IAP_DETAIL_AUTHORIZATION_TTL_MS
@@ -9748,8 +9748,9 @@ func _runtime_requires_beta_access(runtime_kind: String) -> bool:
     return runtime_kind == RUNTIME_ONSCRIPTER
 
 func _beta_access_enforcement_enabled(platform_name: String = "") -> bool:
-    var effective_platform := platform_name if not platform_name.is_empty() else OS.get_name()
-    return effective_platform in ["iOS", "macOS"] and not OS.is_debug_build()
+    # [self-built] Disable the Apple-only beta-access gate so ONScripter and
+    # Artemis runtimes work on self-built / sideloaded unsigned builds.
+    return false
 
 func _selected_game_uses_artemis() -> bool:
     if player == null or not player.has_method("probe_runtime"):
