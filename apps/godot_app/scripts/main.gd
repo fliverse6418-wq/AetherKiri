@@ -8391,10 +8391,12 @@ func _iap_supported_platform() -> bool:
     return OS.get_name() in ["iOS", "macOS"]
 
 func _iap_enforcement_enabled() -> bool:
-    # Local/debug artifacts are for compatibility and UI testing. Catalog
-    # enforcement is enabled only in Release/TestFlight/App Store builds. A
-    # verified secret unlock removes the catalog limit for this installation.
-    return _iap_supported_platform() and not OS.is_debug_build() and not secret_iap_unlocked
+    # [personal sideload patch, 2026-10-08] Store gating disabled. This artifact
+    # is an unsigned self-built binary that cannot reach StoreKit, so the paid
+    # catalog limit is not enforced. Modified copy of GPL-3.0-or-later code;
+    # see LICENSE. Upstream: https://github.com/AetherKiri/Aether
+    return false
+
 
 func _initialize_iap() -> void:
     if not _iap_supported_platform() or player == null:
@@ -11035,25 +11037,21 @@ func _start_selected_game_after_iap() -> void:
     if iap_pending_beta_check_id <= 0:
         _deny_runtime_beta_launch()
 
-func _runtime_requires_beta_access(runtime_kind: String) -> bool:
-    # ONS and Artemis are generally available. Minori remains gated by an
-    # active coffee entitlement in iOS and macOS distribution builds.
-    # Provider-backed runtimes such as WA2 are checked separately.
-    return runtime_kind == RUNTIME_MINORI
+func _runtime_requires_beta_access(_runtime_kind: String) -> bool:
+    # [personal sideload patch, 2026-10-08] No runtime is gated behind the
+    # coffee entitlement in this self-built, unsigned binary. GPL-3.0-or-later.
+    return false
+
 
 func _beta_access_enforcement_enabled(platform_name: String = "") -> bool:
     var effective_platform := platform_name if not platform_name.is_empty() else OS.get_name()
     return effective_platform in ["iOS", "macOS"] and not OS.is_debug_build()
 
 func _selected_game_uses_wa2() -> bool:
-    # WHITE ALBUM2 runs on the KiriKiri host through the compiled Wa2
-    # provider and retains the provider beta-access policy.
-    if player == null or not player.has_method("probe_runtime"):
-        return false
-    var library_path := String(selected_game.get("path", "")).strip_edges()
-    if library_path.is_empty():
-        return false
-    return int(player.probe_runtime("wa2", library_path)) > 0
+    # [personal sideload patch, 2026-10-08] WA2 provider beta check disabled for
+    # this self-built, unsigned binary. GPL-3.0-or-later.
+    return false
+
 
 func _complete_runtime_beta_check() -> void:
     iap_pending_beta_check_id = 0
